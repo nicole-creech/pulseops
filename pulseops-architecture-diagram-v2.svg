@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1080" viewBox="0 0 1700 1080">
+  <defs>
+    <style>
+      .title { font: 700 34px Arial, sans-serif; fill: #111827; }
+      .subtitle { font: 500 18px Arial, sans-serif; fill: #374151; }
+      .label { font: 700 20px Arial, sans-serif; fill: #111827; }
+      .text { font: 500 16px Arial, sans-serif; fill: #1f2937; }
+      .small { font: 500 15px Arial, sans-serif; fill: #374151; }
+      .tiny { font: 500 14px Arial, sans-serif; fill: #4b5563; }
+      .box { fill: #f9fafb; stroke: #111827; stroke-width: 2; rx: 18; ry: 18; }
+      .accent { fill: #eef2ff; stroke: #111827; stroke-width: 2; rx: 18; ry: 18; }
+      .infra { fill: #ecfeff; stroke: #111827; stroke-width: 2; rx: 18; ry: 18; }
+      .flow { stroke: #111827; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#111827"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#ffffff"/>
+
+  <text x="60" y="60" class="title">PulseOps Architecture Overview</text>
+  <text x="60" y="92" class="subtitle">Backend-first operations platform with orders, invoices, domain events, webhook delivery, retries, idempotency, and signing</text>
+
+  <!-- Top row -->
+  <rect x="60" y="145" width="235" height="120" class="accent"/>
+  <text x="85" y="182" class="label">Clients</text>
+  <text x="85" y="212" class="text">Swagger UI / API Consumers</text>
+  <text x="85" y="238" class="small">Send commands and query state</text>
+
+  <rect x="360" y="120" width="340" height="170" class="accent"/>
+  <text x="385" y="158" class="label">PulseOps.Api</text>
+  <text x="385" y="188" class="text">HTTP controllers</text>
+  <text x="385" y="216" class="small">Products • Inventory • Customers</text>
+  <text x="385" y="240" class="small">Orders • Invoices • Events • Webhooks</text>
+  <text x="385" y="264" class="small">Validation, routing, and API contracts</text>
+
+  <rect x="770" y="120" width="340" height="170" class="box"/>
+  <text x="795" y="158" class="label">Application Layer</text>
+  <text x="795" y="188" class="text">DTOs and feature workflows</text>
+  <text x="795" y="216" class="small">Coordinates use cases across services</text>
+  <text x="795" y="240" class="small">Shapes request / response models</text>
+
+  <rect x="1180" y="120" width="450" height="170" class="box"/>
+  <text x="1205" y="158" class="label">Domain Layer</text>
+  <text x="1205" y="188" class="text">Core business model</text>
+  <text x="1205" y="216" class="small">Business • Product • Inventory • Customer</text>
+  <text x="1205" y="240" class="small">Order • Invoice • DomainEvent</text>
+  <text x="1205" y="264" class="small">WebhookEndpoint • WebhookDelivery • IdempotencyRecord</text>
+
+  <!-- Info band -->
+  <rect x="60" y="325" width="1570" height="55" class="accent"/>
+  <text x="85" y="358" class="small">Write safety: selected POST endpoints support Idempotency-Key so retried customer/order requests reuse the original response instead of creating duplicates.</text>
+
+  <!-- Infrastructure group -->
+  <rect x="250" y="420" width="1380" height="245" class="infra"/>
+  <text x="275" y="458" class="label">Infrastructure Layer</text>
+  <text x="275" y="486" class="text">Persistence, reliability, and integration services</text>
+
+  <rect x="290" y="530" width="260" height="90" class="box"/>
+  <text x="315" y="562" class="label">PulseOpsDbContext</text>
+  <text x="315" y="588" class="small">EF Core mappings and migrations</text>
+
+  <rect x="585" y="530" width="260" height="90" class="box"/>
+  <text x="610" y="562" class="label">IdempotencyService</text>
+  <text x="610" y="588" class="small">Stores and reuses original responses</text>
+
+  <rect x="880" y="530" width="260" height="90" class="box"/>
+  <text x="905" y="562" class="label">EventPublisher</text>
+  <text x="905" y="588" class="small">Persists events and dispatches webhooks</text>
+
+  <rect x="1175" y="530" width="260" height="90" class="box"/>
+  <text x="1200" y="562" class="label">WebhookSignatureService</text>
+  <text x="1200" y="588" class="small">Generates HMAC SHA-256 signatures</text>
+
+  <!-- Delivery lifecycle box -->
+  <rect x="510" y="690" width="860" height="65" class="accent"/>
+  <text x="535" y="720" class="small">Webhook delivery lifecycle:</text>
+  <text x="760" y="720" class="small">Pending → Delivered</text>
+  <text x="980" y="720" class="small">or</text>
+  <text x="1020" y="720" class="small">RetryScheduled → DeadLetter</text>
+
+  <!-- Bottom row -->
+  <rect x="140" y="815" width="620" height="210" class="infra"/>
+  <text x="165" y="852" class="label">PostgreSQL</text>
+  <text x="165" y="880" class="text">System of record</text>
+  <text x="165" y="910" class="small">Stores products, inventory, customers, orders, invoices,</text>
+  <text x="165" y="934" class="small">domain events, webhook endpoints, webhook deliveries,</text>
+  <text x="165" y="958" class="small">idempotency records, and EF migration history</text>
+
+  <rect x="835" y="815" width="300" height="210" class="infra"/>
+  <text x="860" y="852" class="label">Redis</text>
+  <text x="860" y="880" class="text">Provisioned in local infrastructure</text>
+  <text x="860" y="910" class="small">Available for caching / future expansion</text>
+  <text x="860" y="934" class="small">Started with Docker Compose</text>
+
+  <rect x="1210" y="815" width="420" height="210" class="accent"/>
+  <text x="1235" y="852" class="label">External Webhook Consumers</text>
+  <text x="1235" y="880" class="text">Receive signed event payloads</text>
+  <text x="1235" y="910" class="small">Headers included on outbound requests:</text>
+  <text x="1235" y="938" class="tiny">X-PulseOps-Event-Type</text>
+  <text x="1235" y="962" class="tiny">X-PulseOps-Event-Id</text>
+  <text x="1235" y="986" class="tiny">X-PulseOps-Signature</text>
+
+  <!-- Arrows -->
+  <path d="M295 205 L360 205" class="flow"/>
+  <path d="M700 205 L770 205" class="flow"/>
+  <path d="M1110 205 L1180 205" class="flow"/>
+
+  <path d="M530 290 L530 420" class="flow"/>
+  <path d="M420 620 L420 815" class="flow"/>
+  <path d="M1010 620 L1010 690" class="flow"/>
+  <path d="M1320 620 L1320 815" class="flow"/>
+
+  <path d="M1090 620 L1210 620 L1210 815" class="flow"/>
+</svg>

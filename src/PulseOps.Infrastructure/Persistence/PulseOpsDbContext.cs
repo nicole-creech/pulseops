@@ -156,6 +156,7 @@ public class PulseOpsDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
             entity.Property(x => x.Url).HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.SigningSecret).HasMaxLength(500).IsRequired();
 
             entity.HasOne(x => x.Business)
                 .WithMany(x => x.WebhookEndpoints)

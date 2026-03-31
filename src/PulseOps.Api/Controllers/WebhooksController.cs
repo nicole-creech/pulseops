@@ -4,6 +4,7 @@ using PulseOps.Application.DTOs;
 using PulseOps.Domain.Entities;
 using PulseOps.Infrastructure.Persistence;
 using PulseOps.Infrastructure.Services;
+using PulseOps.Infrastructure.Services;
 
 namespace PulseOps.Api.Controllers;
 
@@ -13,6 +14,8 @@ public class WebhooksController : ControllerBase
 {
     private readonly PulseOpsDbContext _dbContext;
     private readonly EventPublisher _eventPublisher;
+    private readonly WebhookSignatureService _webhookSignatureService;
+
 
     public WebhooksController(PulseOpsDbContext dbContext, EventPublisher eventPublisher)
     {
@@ -23,6 +26,16 @@ public class WebhooksController : ControllerBase
     public WebhooksController(PulseOpsDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public WebhooksController(
+        PulseOpsDbContext dbContext,
+        EventPublisher eventPublisher,
+        WebhookSignatureService webhookSignatureService)
+    {
+        _dbContext = dbContext;
+        _eventPublisher = eventPublisher;
+        _webhookSignatureService = webhookSignatureService;
     }
 
     [HttpGet("endpoints")]
@@ -36,6 +49,7 @@ public class WebhooksController : ControllerBase
                 BusinessId = x.BusinessId,
                 Name = x.Name,
                 Url = x.Url,
+                SigningSecretPreview = x.SigningSecret.Substring(0, 8) + "...",
                 IsActive = x.IsActive,
                 CreatedAtUtc = x.CreatedAtUtc
             })
@@ -57,12 +71,15 @@ public class WebhooksController : ControllerBase
             return BadRequest("Business does not exist.");
         }
 
+        var signingSecret = _webhookSignatureService.GenerateSecret();
+
         var endpoint = new WebhookEndpoint
         {
             Id = Guid.NewGuid(),
             BusinessId = request.BusinessId,
             Name = request.Name.Trim(),
             Url = request.Url.Trim(),
+            SigningSecret = signingSecret,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -76,6 +93,7 @@ public class WebhooksController : ControllerBase
             BusinessId = endpoint.BusinessId,
             Name = endpoint.Name,
             Url = endpoint.Url,
+            SigningSecretPreview = signingSecret[..8] + "...",
             IsActive = endpoint.IsActive,
             CreatedAtUtc = endpoint.CreatedAtUtc
         };
