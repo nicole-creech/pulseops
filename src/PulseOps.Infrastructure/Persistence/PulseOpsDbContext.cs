@@ -22,6 +22,7 @@ public class PulseOpsDbContext : DbContext
     public DbSet<DomainEvent> DomainEvents => Set<DomainEvent>();
     public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
     public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -162,7 +163,7 @@ public class PulseOpsDbContext : DbContext
 
             entity.HasIndex(x => new { x.BusinessId, x.Url });
         });
-        
+
         modelBuilder.Entity<WebhookDelivery>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -179,6 +180,19 @@ public class PulseOpsDbContext : DbContext
                 .HasForeignKey(x => x.WebhookEndpointId);
 
             entity.HasIndex(x => new { x.DomainEventId, x.WebhookEndpointId });
+        });
+        modelBuilder.Entity<IdempotencyRecord>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Key).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Endpoint).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ResponseJson).HasColumnType("text").IsRequired();
+
+            entity.HasOne(x => x.Business)
+                .WithMany(x => x.IdempotencyRecords)
+                .HasForeignKey(x => x.BusinessId);
+
+            entity.HasIndex(x => new { x.BusinessId, x.Endpoint, x.Key }).IsUnique();
         });
     }
     

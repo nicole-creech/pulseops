@@ -13,4 +13,5 @@ public class Business
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     public ICollection<DomainEvent> DomainEvents { get; set; } = new List<DomainEvent>();
     public ICollection<WebhookEndpoint> WebhookEndpoints { get; set; } = new List<WebhookEndpoint>();
+    public ICollection<IdempotencyRecord> IdempotencyRecords { get; set; } = new List<IdempotencyRecord>();
 }
