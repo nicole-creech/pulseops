@@ -167,12 +167,17 @@ public class OrdersController : ControllerBase
 
             if (inventory is null)
             {
-                return BadRequest($"Inventory missing for product {item.Product.Name}");
+                return BadRequest($"Inventory missing for product {item.Product.Name}.");
             }
 
             if (inventory.ReservedQuantity < item.Quantity)
             {
-                return BadRequest($"Invalid reservation state for product {item.Product.Name}");
+                return BadRequest($"Invalid reservation state for product {item.Product.Name}.");
+            }
+
+            if (inventory.QuantityOnHand < item.Quantity)
+            {
+                return BadRequest($"Not enough quantity on hand for product {item.Product.Name}.");
             }
 
             inventory.ReservedQuantity -= item.Quantity;
@@ -188,7 +193,42 @@ public class OrdersController : ControllerBase
         {
             orderId = order.Id,
             status = order.Status,
-            message = "Order completed and inventory fulfilled"
+            message = "Order completed and inventory fulfilled."
         });
     }
+
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<OrderResponse>> GetOrderById(Guid id, CancellationToken cancellationToken)
+        {
+            var order = await _dbContext.Orders
+                .Include(x => x.Items)
+                .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            var response = new OrderResponse
+            {
+                Id = order.Id,
+                BusinessId = order.BusinessId,
+                CustomerId = order.CustomerId,
+                OrderNumber = order.OrderNumber,
+                Status = order.Status,
+                TotalAmount = order.TotalAmount,
+                CreatedAtUtc = order.CreatedAtUtc,
+                Items = order.Items.Select(x => new OrderItemResponse
+                {
+                    ProductId = x.ProductId,
+                    ProductName = x.Product.Name,
+                    Quantity = x.Quantity,
+                    UnitPrice = x.UnitPrice,
+                    LineTotal = x.LineTotal
+                }).ToList()
+            };
+
+            return Ok(response);
+        }
 }
