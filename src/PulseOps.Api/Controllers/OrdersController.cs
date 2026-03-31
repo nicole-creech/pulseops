@@ -117,7 +117,19 @@ public class OrdersController : ControllerBase
         order.TotalAmount = totalAmount;
         order.Items = orderItems;
 
+        var invoice = new Invoice
+        {
+            Id = Guid.NewGuid(),
+            BusinessId = order.BusinessId,
+            OrderId = order.Id,
+            InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            Amount = order.TotalAmount,
+            Status = "Pending",
+            IssuedAtUtc = DateTime.UtcNow
+        };
+
         _dbContext.Orders.Add(order);
+        _dbContext.Invoices.Add(invoice);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var response = new OrderResponse

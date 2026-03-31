@@ -10,4 +10,5 @@ public class Business
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public ICollection<Customer> Customers { get; set; } = new List<Customer>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 }
