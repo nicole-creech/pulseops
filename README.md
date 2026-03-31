@@ -77,3 +77,79 @@ src/
 
 tests/
   PulseOps.UnitTests
+
+  ## Running Locally
+
+These steps assume a fresh clone of the repository.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/nicole-creech/pulseops.git
+cd pulseops
+```
+
+### 2. Prerequisites
+
+Make sure you have installed:
+
+- .NET SDK (v8+ or v10)
+- Docker Desktop (running)
+
+Verify:
+
+```bash
+dotnet --version
+docker --version
+docker compose version
+```
+
+### 3. Start infrastructure (PostgreSQL + Redis)
+
+```bash
+docker compose up -d
+```
+
+Verify containers are running:
+
+```bash
+docker ps
+```
+
+### 4. Apply database migrations
+
+```bash
+dotnet ef database update \
+  --project src/PulseOps.Infrastructure \
+  --startup-project src/PulseOps.Api
+```
+
+### 5. Run the API
+
+```bash
+dotnet run --project src/PulseOps.Api
+```
+
+You should see output similar to:
+
+```text
+Now listening on: https://localhost:xxxx
+```
+
+### 6. Open Swagger UI
+
+Open the URL shown in the terminal, typically:
+
+```text
+https://localhost:xxxx/swagger
+```
+
+### 7. Seed data
+
+On startup, the app creates a demo business:
+
+```text
+Business ID: 11111111-1111-1111-1111-111111111111
+```
+
+Use this ID for local testing.
