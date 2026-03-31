@@ -11,4 +11,6 @@ public class Business
     public ICollection<Customer> Customers { get; set; } = new List<Customer>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    public ICollection<DomainEvent> DomainEvents { get; set; } = new List<DomainEvent>();
+    public ICollection<WebhookEndpoint> WebhookEndpoints { get; set; } = new List<WebhookEndpoint>();
 }
