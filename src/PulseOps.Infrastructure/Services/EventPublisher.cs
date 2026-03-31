@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PulseOps.Domain.Entities;
 using PulseOps.Infrastructure.Persistence;
+using PulseOps.Infrastructure.Services;
 
 namespace PulseOps.Infrastructure.Services;
 
@@ -10,11 +11,21 @@ public class EventPublisher
 {
     private readonly PulseOpsDbContext _dbContext;
     private readonly HttpClient _httpClient;
+    private readonly WebhookSignatureService _webhookSignatureService;
 
     public EventPublisher(PulseOpsDbContext dbContext, HttpClient httpClient)
     {
         _dbContext = dbContext;
         _httpClient = httpClient;
+    }
+    public EventPublisher(
+        PulseOpsDbContext dbContext,
+        HttpClient httpClient,
+        WebhookSignatureService webhookSignatureService)
+    {
+        _dbContext = dbContext;
+        _httpClient = httpClient;
+        _webhookSignatureService = webhookSignatureService;
     }
 
     public async Task PublishAsync(Guid businessId, string eventType, object payload, CancellationToken cancellationToken)
@@ -84,6 +95,10 @@ public class EventPublisher
         delivery.LastAttemptAtUtc = DateTime.UtcNow;
         delivery.LastError = null;
 
+        var signature = _webhookSignatureService.ComputeSignature(
+        delivery.WebhookEndpoint.SigningSecret,
+        delivery.DomainEvent.PayloadJson);
+
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Post, delivery.WebhookEndpoint.Url)
@@ -93,6 +108,7 @@ public class EventPublisher
 
             request.Headers.Add("X-PulseOps-Event-Type", delivery.DomainEvent.EventType);
             request.Headers.Add("X-PulseOps-Event-Id", delivery.DomainEvent.Id.ToString());
+            request.Headers.Add("X-PulseOps-Signature", signature);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
