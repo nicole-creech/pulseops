@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  pulseops-postgres:
+    image: postgres:16
+    container_name: pulseops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pulseops
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pulseops-postgres-data:/var/lib/postgresql/data
+
+  pulseops-redis:
+    image: redis:7
+    container_name: pulseops-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  pulseops-postgres-data:

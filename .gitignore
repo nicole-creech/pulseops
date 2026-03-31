@@ -1,0 +1,45 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS / VS Code
+.vs/
+.vscode/
+
+# Rider
+.idea/
+
+# Test results
+TestResults/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# .NET local tools and packages
+*.nupkg
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# App settings overrides
+appsettings.Development.json
+
+# EF / database local artifacts if needed
+*.db
+*.db-shm
+*.db-wal
+
+# Node modules just in case
+node_modules/
