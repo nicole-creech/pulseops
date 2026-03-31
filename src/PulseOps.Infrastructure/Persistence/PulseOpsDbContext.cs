@@ -19,6 +19,10 @@ public class PulseOpsDbContext : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
 
+    public DbSet<DomainEvent> DomainEvents => Set<DomainEvent>();
+    public DbSet<WebhookEndpoint> WebhookEndpoints => Set<WebhookEndpoint>();
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -131,6 +135,49 @@ public class PulseOpsDbContext : DbContext
 
             entity.HasIndex(x => x.OrderId).IsUnique();
             entity.HasIndex(x => new { x.BusinessId, x.InvoiceNumber }).IsUnique();
+        });
+
+        modelBuilder.Entity<DomainEvent>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.EventType).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.PayloadJson).HasColumnType("text").IsRequired();
+
+            entity.HasOne(x => x.Business)
+                .WithMany(x => x.DomainEvents)
+                .HasForeignKey(x => x.BusinessId);
+
+            entity.HasIndex(x => new { x.BusinessId, x.EventType });
+        });
+
+        modelBuilder.Entity<WebhookEndpoint>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.Url).HasMaxLength(1000).IsRequired();
+
+            entity.HasOne(x => x.Business)
+                .WithMany(x => x.WebhookEndpoints)
+                .HasForeignKey(x => x.BusinessId);
+
+            entity.HasIndex(x => new { x.BusinessId, x.Url });
+        });
+
+        modelBuilder.Entity<WebhookDelivery>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Status).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ResponseBody).HasColumnType("text");
+
+            entity.HasOne(x => x.DomainEvent)
+                .WithMany(x => x.WebhookDeliveries)
+                .HasForeignKey(x => x.DomainEventId);
+
+            entity.HasOne(x => x.WebhookEndpoint)
+                .WithMany(x => x.WebhookDeliveries)
+                .HasForeignKey(x => x.WebhookEndpointId);
+
+            entity.HasIndex(x => new { x.DomainEventId, x.WebhookEndpointId });
         });
     }
     

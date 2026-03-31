@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PulseOps.Application.DTOs;
 using PulseOps.Infrastructure.Persistence;
+using PulseOps.Infrastructure.Services;
 
 namespace PulseOps.Api.Controllers;
 
@@ -10,6 +11,14 @@ namespace PulseOps.Api.Controllers;
 public class InvoicesController : ControllerBase
 {
     private readonly PulseOpsDbContext _dbContext;
+
+    private readonly EventPublisher _eventPublisher;
+
+    public InvoicesController(PulseOpsDbContext dbContext, EventPublisher eventPublisher)
+    {
+        _dbContext = dbContext;
+        _eventPublisher = eventPublisher;
+    }
 
     public InvoicesController(PulseOpsDbContext dbContext)
     {
@@ -83,6 +92,21 @@ public class InvoicesController : ControllerBase
         invoice.PaidAtUtc = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        await _eventPublisher.PublishAsync(
+            invoice.BusinessId,
+            "invoice.paid",
+            new
+            {
+                invoice.Id,
+                invoice.InvoiceNumber,
+                invoice.BusinessId,
+                invoice.OrderId,
+                invoice.Amount,
+                invoice.Status,
+                invoice.PaidAtUtc
+            },
+            cancellationToken);
 
         return Ok(new
         {

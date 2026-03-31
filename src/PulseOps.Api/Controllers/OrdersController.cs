@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PulseOps.Application.DTOs;
 using PulseOps.Domain.Entities;
 using PulseOps.Infrastructure.Persistence;
+using PulseOps.Infrastructure.Services;
 
 namespace PulseOps.Api.Controllers;
 
@@ -11,6 +12,14 @@ namespace PulseOps.Api.Controllers;
 public class OrdersController : ControllerBase
 {
     private readonly PulseOpsDbContext _dbContext;
+
+    private readonly EventPublisher _eventPublisher;
+
+    public OrdersController(PulseOpsDbContext dbContext, EventPublisher eventPublisher)
+    {
+        _dbContext = dbContext;
+        _eventPublisher = eventPublisher;
+    }
 
     public OrdersController(PulseOpsDbContext dbContext)
     {
@@ -151,6 +160,21 @@ public class OrdersController : ControllerBase
             }).ToList()
         };
 
+        await _eventPublisher.PublishAsync(
+            order.BusinessId,
+            "order.created",
+            new
+            {
+                order.Id,
+                order.OrderNumber,
+                order.BusinessId,
+                order.CustomerId,
+                order.TotalAmount,
+                order.Status,
+                order.CreatedAtUtc
+            },
+            cancellationToken);
+
         return Ok(response);
     }
 
@@ -240,6 +264,20 @@ public class OrdersController : ControllerBase
                     LineTotal = x.LineTotal
                 }).ToList()
             };
+
+            await _eventPublisher.PublishAsync(
+                order.BusinessId,
+                "order.completed",
+                new
+                {
+                    order.Id,
+                    order.OrderNumber,
+                    order.BusinessId,
+                    order.CustomerId,
+                    order.TotalAmount,
+                    order.Status
+                },
+                cancellationToken);
 
             return Ok(response);
         }

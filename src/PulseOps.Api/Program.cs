@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using PulseOps.Domain.Entities;
 using PulseOps.Infrastructure.Persistence;
+using PulseOps.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient<EventPublisher>();
 
 builder.Services.AddDbContext<PulseOpsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PulseOpsDb")));
