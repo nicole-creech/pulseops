@@ -9,6 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<EventPublisher>();
+builder.Services.AddScoped<IdempotencyService>();
 
 builder.Services.AddDbContext<PulseOpsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PulseOpsDb")));

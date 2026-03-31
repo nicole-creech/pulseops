@@ -4,6 +4,7 @@ using PulseOps.Application.DTOs;
 using PulseOps.Domain.Entities;
 using PulseOps.Infrastructure.Persistence;
 using PulseOps.Infrastructure.Services;
+using PulseOps.Infrastructure.Services;
 
 namespace PulseOps.Api.Controllers;
 
@@ -15,6 +16,8 @@ public class OrdersController : ControllerBase
 
     private readonly EventPublisher _eventPublisher;
 
+    private readonly IdempotencyService _idempotencyService;
+
     public OrdersController(PulseOpsDbContext dbContext, EventPublisher eventPublisher)
     {
         _dbContext = dbContext;
@@ -24,6 +27,16 @@ public class OrdersController : ControllerBase
     public OrdersController(PulseOpsDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public OrdersController(
+        PulseOpsDbContext dbContext,
+        EventPublisher eventPublisher,
+        IdempotencyService idempotencyService)
+    {
+        _dbContext = dbContext;
+        _eventPublisher = eventPublisher;
+        _idempotencyService = idempotencyService;
     }
 
     [HttpPost]
@@ -52,6 +65,27 @@ public class OrdersController : ControllerBase
         if (customer is null)
         {
             return BadRequest("Customer does not exist for this business.");
+        }
+
+        string? idempotencyKey = null;
+
+        if (Request.Headers.TryGetValue("Idempotency-Key", out var keyValues))
+        {
+            idempotencyKey = keyValues.FirstOrDefault()?.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            var existing = await _idempotencyService.GetExistingAsync(
+                request.BusinessId,
+                "POST:/api/orders",
+                idempotencyKey,
+                cancellationToken);
+
+            if (existing is not null)
+            {
+                return Content(existing.ResponseJson, "application/json");
+            }
         }
 
         var requestedProductIds = request.Items.Select(x => x.ProductId).Distinct().ToList();
@@ -174,6 +208,17 @@ public class OrdersController : ControllerBase
                 order.CreatedAtUtc
             },
             cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(idempotencyKey))
+            {
+                await _idempotencyService.SaveAsync(
+                    request.BusinessId,
+                    "POST:/api/orders",
+                    idempotencyKey,
+                    response,
+                    StatusCodes.Status200OK,
+                    cancellationToken);
+            }
 
         return Ok(response);
     }
