@@ -17,6 +17,7 @@ public class PulseOpsDbContext : DbContext
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -112,5 +113,25 @@ public class PulseOpsDbContext : DbContext
                 .WithMany(x => x.OrderItems)
                 .HasForeignKey(x => x.ProductId);
         });
+
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.InvoiceNumber).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.Amount).HasColumnType("numeric(18,2)");
+            entity.Property(x => x.Status).HasMaxLength(50).IsRequired();
+
+            entity.HasOne(x => x.Business)
+                .WithMany(x => x.Invoices)
+                .HasForeignKey(x => x.BusinessId);
+
+            entity.HasOne(x => x.Order)
+                .WithOne(x => x.Invoice)
+                .HasForeignKey<Invoice>(x => x.OrderId);
+
+            entity.HasIndex(x => x.OrderId).IsUnique();
+            entity.HasIndex(x => new { x.BusinessId, x.InvoiceNumber }).IsUnique();
+        });
     }
+    
 }
