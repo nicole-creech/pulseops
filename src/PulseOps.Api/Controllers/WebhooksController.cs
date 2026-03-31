@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PulseOps.Application.DTOs;
 using PulseOps.Domain.Entities;
 using PulseOps.Infrastructure.Persistence;
+using PulseOps.Infrastructure.Services;
 
 namespace PulseOps.Api.Controllers;
 
@@ -11,6 +12,13 @@ namespace PulseOps.Api.Controllers;
 public class WebhooksController : ControllerBase
 {
     private readonly PulseOpsDbContext _dbContext;
+    private readonly EventPublisher _eventPublisher;
+
+    public WebhooksController(PulseOpsDbContext dbContext, EventPublisher eventPublisher)
+    {
+        _dbContext = dbContext;
+        _eventPublisher = eventPublisher;
+    }
 
     public WebhooksController(PulseOpsDbContext dbContext)
     {
@@ -75,7 +83,7 @@ public class WebhooksController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("deliveries")]
+   [HttpGet("deliveries")]
     public async Task<ActionResult<IEnumerable<WebhookDeliveryResponse>>> GetDeliveries(CancellationToken cancellationToken)
     {
         var deliveries = await _dbContext.WebhookDeliveries
@@ -87,14 +95,47 @@ public class WebhooksController : ControllerBase
                 WebhookEndpointId = x.WebhookEndpointId,
                 Status = x.Status,
                 AttemptCount = x.AttemptCount,
+                MaxAttempts = x.MaxAttempts,
                 ResponseStatusCode = x.ResponseStatusCode,
                 ResponseBody = x.ResponseBody,
+                LastError = x.LastError,
                 CreatedAtUtc = x.CreatedAtUtc,
                 LastAttemptAtUtc = x.LastAttemptAtUtc,
+                NextRetryAtUtc = x.NextRetryAtUtc,
                 DeliveredAtUtc = x.DeliveredAtUtc
             })
             .ToListAsync(cancellationToken);
 
         return Ok(deliveries);
+    }
+
+    [HttpPost("deliveries/{id:guid}/retry")]
+    public async Task<IActionResult> RetryDelivery(Guid id, CancellationToken cancellationToken)
+    {
+        var deliveryExists = await _dbContext.WebhookDeliveries
+            .AnyAsync(x => x.Id == id, cancellationToken);
+
+        if (!deliveryExists)
+        {
+            return NotFound("Webhook delivery not found.");
+        }
+
+        await _eventPublisher.RetryDeliveryAsync(id, cancellationToken);
+
+        return Ok(new
+        {
+            deliveryId = id,
+            message = "Retry attempted."
+        });
+    }
+    [HttpPost("deliveries/process-due-retries")]
+    public async Task<IActionResult> ProcessDueRetries(CancellationToken cancellationToken)
+    {
+        await _eventPublisher.ProcessDueRetriesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            message = "Processed due retries."
+        });
     }
 }

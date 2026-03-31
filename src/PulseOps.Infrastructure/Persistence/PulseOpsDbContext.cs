@@ -162,12 +162,13 @@ public class PulseOpsDbContext : DbContext
 
             entity.HasIndex(x => new { x.BusinessId, x.Url });
         });
-
+        
         modelBuilder.Entity<WebhookDelivery>(entity =>
         {
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Status).HasMaxLength(50).IsRequired();
             entity.Property(x => x.ResponseBody).HasColumnType("text");
+            entity.Property(x => x.LastError).HasColumnType("text");
 
             entity.HasOne(x => x.DomainEvent)
                 .WithMany(x => x.WebhookDeliveries)
