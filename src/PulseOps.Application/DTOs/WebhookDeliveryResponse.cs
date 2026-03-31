@@ -7,9 +7,12 @@ public class WebhookDeliveryResponse
     public Guid WebhookEndpointId { get; set; }
     public string Status { get; set; } = string.Empty;
     public int AttemptCount { get; set; }
+    public int MaxAttempts { get; set; }
     public int? ResponseStatusCode { get; set; }
     public string? ResponseBody { get; set; }
+    public string? LastError { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? LastAttemptAtUtc { get; set; }
+    public DateTime? NextRetryAtUtc { get; set; }
     public DateTime? DeliveredAtUtc { get; set; }
 }
